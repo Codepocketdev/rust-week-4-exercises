@@ -124,7 +124,22 @@ pub struct OutPoint {
 
 // Simple CLI argument parser
 pub fn parse_cli_args(args: &[String]) -> Result<CliCommand, BitcoinError> {
-    // TODO: Match args to "send" or "balance" commands and parse required arguments
+    match args.first().map(|s| s.as_str()) {
+        Some("send") => {
+            if args.len() < 3 {
+                return Err(BitcoinError::ParseError(
+                    "send requires amount and address".to_string(),
+                ));
+            }
+            let amount = args[1]
+                .parse::<u64>()
+                .map_err(|_| BitcoinError::ParseError("invalid amount".to_string()))?;
+            let address = args[2].clone();
+            Ok(CliCommand::Send { amount, address })
+        }
+        Some("balance") => Ok(CliCommand::Balance),
+        _ => Err(BitcoinError::ParseError("unknown command".to_string())),
+    }
 }
 
 pub enum CliCommand {
